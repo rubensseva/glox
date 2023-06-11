@@ -5,22 +5,22 @@ import (
 )
 
 var keywords = map[string]TokenType{
-	"and":   AND,
-	"class": CLASS,
-	"else":  ELSE,
-	"false": FALSE,
-	"for":   FOR,
-	"fun":   FUN,
-	"if":    IF,
-	"nil":   NIL,
-	"or":    OR,
-	"print": PRINT,
-	"return":RETURN,
-	"super": SUPER,
-	"this":  THIS,
-	"true":  TRUE,
-	"var":   VAR,
-	"while": WHILE,
+	"and":    AND,
+	"class":  CLASS,
+	"else":   ELSE,
+	"false":  FALSE,
+	"for":    FOR,
+	"fun":    FUN,
+	"if":     IF,
+	"nil":    NIL,
+	"or":     OR,
+	"print":  PRINT,
+	"return": RETURN,
+	"super":  SUPER,
+	"this":   THIS,
+	"true":   TRUE,
+	"var":    VAR,
+	"while":  WHILE,
 }
 
 type Scanner struct {
@@ -135,12 +135,12 @@ func (s *Scanner) identifier() {
 	}
 
 	text := s.source[s.start:s.current]
-    tokentype, ok := keywords[text];
-    if !ok {
-		tokentype = IDENTIFIER;
+	tokentype, ok := keywords[text]
+	if !ok {
+		tokentype = IDENTIFIER
 	}
 
-    s.addToken(tokentype);
+	s.addToken(tokentype)
 
 	s.addToken(IDENTIFIER)
 }
@@ -192,14 +192,14 @@ func (s *Scanner) peekNext() byte {
 }
 
 func isAlpha(c byte) bool {
-    return (c >= 'a' && c <= 'z') ||
-           (c >= 'A' && c <= 'Z') ||
-            c == '_';
-  }
+	return (c >= 'a' && c <= 'z') ||
+		(c >= 'A' && c <= 'Z') ||
+		c == '_'
+}
 
 func isAlphaNumeric(c byte) bool {
-    return isAlpha(c) || isDigit(c);
-  }
+	return isAlpha(c) || isDigit(c)
+}
 
 func (s *Scanner) number() {
 	for isDigit(s.peek()) {
@@ -244,5 +244,4 @@ func (s *Scanner) addToken2(tokentype TokenType, literal any) {
 		s.tokens,
 		NewToken(tokentype, text, literal, s.line),
 	)
-
 }

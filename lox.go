@@ -46,14 +46,13 @@ func runPrompt() {
 
 func run(source string) {
 	scanner := &Scanner{source: source}
-	tokens := scanner.scanTokens();
+	tokens := scanner.scanTokens()
 
-    // For now, just print the tokens
-    for _, token := range tokens {
-		fmt.Println(token);
-    }
+	// For now, just print the tokens
+	for _, token := range tokens {
+		fmt.Println(token)
+	}
 }
-
 
 func loxerror(line int, message string) {
 	loxreport(line, "", message)
