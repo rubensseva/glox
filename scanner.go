@@ -39,10 +39,9 @@ func (s *Scanner) Scanner(source string) *Scanner {
 }
 
 func (s *Scanner) scanTokens() []Token {
-	// Does this really work?
 
 	for !s.isAtEnd() {
-		// We are at the beginning of the next lexeme.
+		// We are at the beginning of the next lexeme
 		s.start = s.current
 		s.scanToken()
 	}
@@ -100,7 +99,7 @@ func (s *Scanner) scanToken() {
 
 	case '/':
 		if s.match('/') {
-			// A comment goes until the end of the line.
+			// A comment goes until the end of the line
 			for s.peek() != '\n' && !s.isAtEnd() {
 				s.advance()
 			}
@@ -109,7 +108,7 @@ func (s *Scanner) scanToken() {
 		}
 
 	case ' ', '\r', '\t':
-		// Ignore whitespace.
+		// Ignore whitespace
 	case '\n':
 		s.line++
 
@@ -159,10 +158,9 @@ func (s *Scanner) string() {
 		return
 	}
 
-	// The closing ".
 	s.advance()
 
-	// Trim the surrounding quotes.
+	// Trim the surrounding quotes
 	value := s.source[(s.start + 1):(s.current - 1)]
 	s.addToken2(STRING, value)
 }
@@ -241,7 +239,6 @@ func (s *Scanner) addToken(tokentype TokenType) {
 }
 
 func (s *Scanner) addToken2(tokentype TokenType, literal any) {
-	// TODO: Verify that this works in the same way as java substring()
 	text := s.source[s.start:s.current]
 	s.tokens = append(
 		s.tokens,

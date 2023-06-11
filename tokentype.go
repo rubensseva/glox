@@ -28,7 +28,6 @@ func (t TokenType) String() string {
 	case STAR:
 		return "STAR"
 
-	// One or two character tokens.
 	case BANG:
 		return "BANG"
 	case BANG_EQUAL:
@@ -46,7 +45,6 @@ func (t TokenType) String() string {
 	case LESS_EQUAL:
 		return "LESS_EQUAL"
 
-	// Literals.
 	case IDENTIFIER:
 		return "IDENTIFIER"
 	case STRING:
@@ -54,7 +52,6 @@ func (t TokenType) String() string {
 	case NUMBER:
 		return "NUMBER"
 
-	// Keywords.
 	case AND:
 		return "AND"
 	case CLASS:
@@ -110,7 +107,7 @@ const (
 	SLASH
 	STAR
 
-	// One or two character tokens.
+	// One or two character tokens
 	BANG
 	BANG_EQUAL
 	EQUAL
@@ -120,12 +117,12 @@ const (
 	LESS
 	LESS_EQUAL
 
-	// Literals.
+	// Literals
 	IDENTIFIER
 	STRING
 	NUMBER
 
-	// Keywords.
+	// Keywords
 	AND
 	CLASS
 	ELSE

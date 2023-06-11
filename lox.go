@@ -48,15 +48,12 @@ func run(source string) {
 	scanner := &Scanner{source: source}
 	tokens := scanner.scanTokens();
 
-    // For now, just print the tokens.
+    // For now, just print the tokens
     for _, token := range tokens {
 		fmt.Println(token);
     }
 }
 
-
-
-// errror
 
 func loxerror(line int, message string) {
 	loxreport(line, "", message)
