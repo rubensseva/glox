@@ -122,7 +122,7 @@ func (s *Scanner) scanToken() {
 		} else if isAlpha(c) {
 			s.identifier()
 		} else {
-			loxerror(s.line, "Unexpected character.")
+			loxlineerror(s.line, "Unexpected character.")
 		}
 		break
 
@@ -154,7 +154,7 @@ func (s *Scanner) string() {
 	}
 
 	if s.isAtEnd() {
-		loxerror(s.line, "Unterminated string.")
+		loxlineerror(s.line, "Unterminated string.")
 		return
 	}
 

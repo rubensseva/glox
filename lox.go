@@ -48,16 +48,29 @@ func run(source string) {
 	scanner := &Scanner{source: source}
 	tokens := scanner.scanTokens()
 
-	// For now, just print the tokens
-	for _, token := range tokens {
-		fmt.Println(token)
+	var parser Parser = NewParser(tokens)
+	var expression Expr = parser.parse()
+
+	// Stop if there was a syntax error.
+	if hadError {
+		return
 	}
+
+	fmt.Println(ASTPrint(expression))
 }
 
-func loxerror(line int, message string) {
+func loxlineerror(line int, message string) {
 	loxreport(line, "", message)
 }
 func loxreport(line int, where, message string) {
 	fmt.Printf("[line %d] Error%v: %v\n", line, where, message)
 	hadError = true
+}
+
+func loxtokenerror(token Token, message string) {
+	if token.tokenType == EOF {
+		loxreport(token.line, " at end", message)
+	} else {
+		loxreport(token.line, " at '"+token.lexeme+"'", message)
+	}
 }
