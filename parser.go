@@ -56,7 +56,9 @@ func (p *Parser) consume(tokentype TokenType, message string) (Token, error) {
 		return p.advance(), nil
 	}
 
-	return Token{}, p.error(p.peek(), message)
+	err := p.error(p.peek(), message)
+	panic(err)
+	return Token{}, err
 }
 
 func (p *Parser) error(token Token, message string) error {
@@ -162,6 +164,7 @@ func (p *Parser) term() Expr {
 
 func (p *Parser) factor() Expr {
 	var expr Expr = p.unary()
+
 	for p.match(SLASH, STAR) {
 		var operator Token = p.previous()
 		var right Expr = p.unary()
@@ -171,6 +174,7 @@ func (p *Parser) factor() Expr {
 			right:    right,
 		}
 	}
+
 	return expr
 }
 
