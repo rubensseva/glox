@@ -17,7 +17,7 @@ func (p *Parser) parse() Expr {
 	defer func() {
 		caught := recover()
 		if caught != nil {
-			fmt.Printf("caught a panic, rethrowing: %v", caught)
+			fmt.Printf("caught a panic, rethrowing: %v\n", caught)
 			panic(caught)
 		}
 	}()
@@ -51,7 +51,6 @@ func (p *Parser) consume(tokentype TokenType, message string) (Token, error) {
 	}
 
 	err := p.error(p.peek(), message)
-	panic(err)
 	return Token{}, err
 }
 
@@ -60,7 +59,7 @@ func (p *Parser) error(token Token, message string) error {
 
 	// TODO: Figure this out
 	// https://craftinginterpreters.com/parsing-expressions.html#entering-panic-mode
-	return fmt.Errorf("this should be a ParseError. Token: %v, message: %v", token, message)
+	return fmt.Errorf("parse error: Token: %v, message: %v", token, message)
 }
 
 func (p *Parser) synchronize() {
@@ -210,7 +209,10 @@ func (p *Parser) primary() Expr {
 
 	if p.match(LEFT_PAREN) {
 		var expr Expr = p.expression()
-		p.consume(RIGHT_PAREN, "Expect ')' after expression.")
+		_, err := p.consume(RIGHT_PAREN, "Expect ')' after expression.")
+		if err != nil {
+			panic(fmt.Errorf("trying to consume: %w", err))
+		}
 		return Grouping{
 			expression: expr,
 		}
