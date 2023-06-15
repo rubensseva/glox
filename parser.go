@@ -24,12 +24,6 @@ func (p *Parser) parse() Expr {
 
 	expr := p.expression()
 
-	// try {
-	//   return expression();
-	// } catch (ParseError error) {
-	//   return null;
-	// }
-
 	return expr
 }
 
@@ -66,7 +60,7 @@ func (p *Parser) error(token Token, message string) error {
 
 	// TODO: Figure this out
 	// https://craftinginterpreters.com/parsing-expressions.html#entering-panic-mode
-	return fmt.Errorf("this should be a ParseError")
+	return fmt.Errorf("this should be a ParseError. Token: %v, message: %v", token, message)
 }
 
 func (p *Parser) synchronize() {
@@ -212,7 +206,6 @@ func (p *Parser) primary() Expr {
 		return Literal{
 			value: p.previous().literal,
 		}
-		// return new Expr.Literal(previous().literal);
 	}
 
 	if p.match(LEFT_PAREN) {

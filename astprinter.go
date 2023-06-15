@@ -51,20 +51,3 @@ func printLiteral(expr Literal) string {
 func printUnary(expr Unary) string {
 	return parenthesize(expr.operator.lexeme, expr.right)
 }
-
-//   @Override
-//   public String visitGroupingExpr(Expr.Grouping expr) {
-//     return parenthesize("group", expr.expression);
-//   }
-
-//   @Override
-//   public String visitLiteralExpr(Expr.Literal expr) {
-//     if (expr.value == null) return "nil";
-//     return expr.value.toString();
-//   }
-
-//   @Override
-//   public String visitUnaryExpr(Expr.Unary expr) {
-//     return parenthesize(expr.operator.lexeme, expr.right);
-//   }
-// }
