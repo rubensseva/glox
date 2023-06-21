@@ -57,6 +57,8 @@ func run(source string) {
 	}
 
 	fmt.Println(ASTPrint(expression))
+
+	interpret(expression)
 }
 
 func loxlineerror(line int, message string) {
