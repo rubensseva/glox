@@ -6,7 +6,10 @@ import (
 	"os"
 )
 
-var hadError bool
+var (
+	hadError        bool
+	hadRuntimeError bool
+)
 
 func lmain() {
 	switch {
@@ -29,6 +32,9 @@ func runFile(path string) {
 
 	if hadError {
 		os.Exit(65)
+	}
+	if hadRuntimeError {
+		os.Exit(70)
 	}
 }
 
@@ -56,7 +62,8 @@ func run(source string) {
 		return
 	}
 
-	fmt.Println(ASTPrint(expression))
+	// Uncomment to print the ast for debu
+	// fmt.Println(ASTPrint(expression))
 
 	interpret(expression)
 }
@@ -64,6 +71,14 @@ func run(source string) {
 func loxlineerror(line int, message string) {
 	loxreport(line, "", message)
 }
+
+func runtimeError(err RuntimeError) {
+	// fmt.Printf(err.Error() +
+	//     "\n[line " + err.token.line + "]")
+	fmt.Printf("RUNTIME ERROR: %v\n[line%v]", err, err.token.line)
+	hadRuntimeError = true
+}
+
 func loxreport(line int, where, message string) {
 	fmt.Printf("[line %d] Error%v: %v\n", line, where, message)
 	hadError = true

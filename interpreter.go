@@ -1,22 +1,55 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 )
 
 func interpret(expression Expr) {
-	var value any = evaluate(expression)
-	fmt.Println(value)
+	value, err := evaluate(expression)
+	if err != nil {
+		var trgt RuntimeError
+		if errors.As(err, &trgt) {
+			runtimeError(trgt)
+		} else {
+			panic(err)
+		}
+	}
+	fmt.Println(stringify(value))
 }
 
-func evaluate(expr Expr) any {
+func checkNumberOperand(operator Token, operand any) error {
+	_, ok := operand.(float64)
+	if !ok {
+		return RuntimeError{
+			token: operator,
+			msg:   "Operand must be a number",
+		}
+	}
+	return nil
+}
+
+func checkNumberOperands(operator Token, left any, right any) error {
+	_, lok := left.(float64)
+	_, rok := right.(float64)
+
+	if !lok || !rok {
+		return RuntimeError{
+			token: operator,
+			msg:   "Operand must be a number",
+		}
+	}
+	return nil
+}
+
+func evaluate(expr Expr) (any, error) {
 	switch t := expr.(type) {
 	case Binary:
 		return evalBinary(t)
 	case Grouping:
 		return evalGrouping(t)
 	case Literal:
-		return evalLiteral(t)
+		return evalLiteral(t), nil
 	case Unary:
 		return evalUnary(t)
 	default:
@@ -47,25 +80,50 @@ func isEqual(a any, b any) bool {
 	return a == b
 }
 
-func evalBinary(expr Binary) any {
-	var left any = evaluate(expr.left)
-	var right any = evaluate(expr.right)
+func stringify(object any) string {
+	return fmt.Sprintf("%v", object)
+}
+
+func evalBinary(expr Binary) (any, error) {
+	left, err := evaluate(expr.left)
+	if err != nil {
+		return nil, err
+	}
+	right, err := evaluate(expr.right)
+	if err != nil {
+		return nil, err
+	}
 
 	switch expr.operator.tokenType {
 	case GREATER:
-		return left.(float64) > right.(float64)
+		if err := checkNumberOperands(expr.operator, left, right); err != nil {
+			return nil, fmt.Errorf("checking binary greater than: %w", err)
+		}
+		return left.(float64) > right.(float64), nil
 	case GREATER_EQUAL:
-		return left.(float64) >= right.(float64)
+		if err := checkNumberOperands(expr.operator, left, right); err != nil {
+			return nil, fmt.Errorf("checking binary greater than or equal: %w", err)
+		}
+		return left.(float64) >= right.(float64), nil
 	case LESS:
-		return left.(float64) < right.(float64)
+		if err := checkNumberOperands(expr.operator, left, right); err != nil {
+			return nil, fmt.Errorf("checking binary less than: %w", err)
+		}
+		return left.(float64) < right.(float64), nil
 	case LESS_EQUAL:
-		return left.(float64) <= right.(float64)
+		if err := checkNumberOperands(expr.operator, left, right); err != nil {
+			return nil, fmt.Errorf("checking binary less than or equal: %w", err)
+		}
+		return left.(float64) <= right.(float64), nil
 	case MINUS:
-		return left.(float64) - right.(float64)
+		if err := checkNumberOperands(expr.operator, left, right); err != nil {
+			return nil, fmt.Errorf("checking binary subtraction: %w", err)
+		}
+		return left.(float64) - right.(float64), nil
 	case BANG_EQUAL:
-		return !isEqual(left, right)
+		return !isEqual(left, right), nil
 	case EQUAL_EQUAL:
-		return isEqual(left, right)
+		return isEqual(left, right), nil
 	case PLUS:
 		// Pluss is a bit special because it works for
 		// numbers and strings
@@ -73,27 +131,46 @@ func evalBinary(expr Binary) any {
 			l, lok := left.(float64)
 			r, rok := right.(float64)
 			if lok && rok {
-				return l + r
+				return l + r, nil
 			}
 		}
 		{
 			l, lok := left.(string)
 			r, rok := right.(string)
 			if lok && rok {
-				return l + r
+				return l + r, nil
 			}
 		}
+		return nil, fmt.Errorf("checking plus (could be number or string): %w", RuntimeError{
+			token: expr.operator,
+			msg:   "Operands must be two numbers or two strings",
+		})
 	case SLASH:
-		return left.(float64) / right.(float64)
+		if err := checkNumberOperands(expr.operator, left, right); err != nil {
+			return nil, fmt.Errorf("checking binary division (SLASH): %w", err)
+		}
+		// Check if we are dividing by zero
+		rval := right.(float64)
+		if rval == 0.0 {
+			return nil, RuntimeError{
+				token: expr.operator,
+				msg:   "divide by zero",
+			}
+		}
+		return left.(float64) / right.(float64), nil
 	case STAR:
-		return left.(float64) * right.(float64)
+		if err := checkNumberOperands(expr.operator, left, right); err != nil {
+			return nil, fmt.Errorf("checking binary multiplication (STAR): %w", err)
+		}
+		return left.(float64) * right.(float64), nil
 	}
 
 	// Unreachable
-	return nil
+	panic("eval binary: should never get here...")
+	return nil, fmt.Errorf("eval binary: should never get here...")
 }
 
-func evalGrouping(expr Grouping) any {
+func evalGrouping(expr Grouping) (any, error) {
 	return evaluate(expr.expression)
 }
 
@@ -101,16 +178,23 @@ func evalLiteral(expr Literal) any {
 	return expr.value
 }
 
-func evalUnary(expr Unary) any {
-	var right any = evaluate(expr.right)
+func evalUnary(expr Unary) (any, error) {
+	right, err := evaluate(expr.right)
+	if err != nil {
+		return nil, err
+	}
 
 	switch expr.operator.tokenType {
 	case BANG:
-		return !isTruthy(right)
+		return !isTruthy(right), nil
 	case MINUS:
-		return -(right.(float64))
+		if err := checkNumberOperand(expr.operator, right); err != nil {
+			return nil, fmt.Errorf("checking minus operand: %w", err)
+		}
+		return -(right.(float64)), nil
 	}
 
 	// Unreachable
-	return nil
+	panic("eval unary: should never get here...")
+	return nil, fmt.Errorf("eval unary: should never get here...")
 }
