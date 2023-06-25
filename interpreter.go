@@ -5,18 +5,33 @@ import (
 	"fmt"
 )
 
-func interpret(expression Expr) {
-	value, err := evaluate(expression)
-	if err != nil {
-		var trgt RuntimeError
-		if errors.As(err, &trgt) {
-			runtimeError(trgt)
-		} else {
-			panic(err)
+func interpret(statements []Stmt) {
+	for _, statement := range statements {
+		err := execute(statement)
+		if err != nil {
+			var trgt RuntimeError
+			if errors.As(err, &trgt) {
+				runtimeError(trgt)
+				break
+			} else {
+				panic(err)
+			}
 		}
 	}
-	fmt.Println(stringify(value))
 }
+
+// func interpret(expression Expr) {
+// 	value, err := evaluate(expression)
+// 	if err != nil {
+// 		var trgt RuntimeError
+// 		if errors.As(err, &trgt) {
+// 			runtimeError(trgt)
+// 		} else {
+// 			panic(err)
+// 		}
+// 	}
+// 	fmt.Println(stringify(value))
+// }
 
 func checkNumberOperand(operator Token, operand any) error {
 	_, ok := operand.(float64)
@@ -55,6 +70,33 @@ func evaluate(expr Expr) (any, error) {
 	default:
 		panic(fmt.Sprintf("unknown type %T: %v", expr, t))
 	}
+}
+
+func execute(stmt Stmt) error {
+	switch t := stmt.(type) {
+	case PrintStmt:
+		return visitPrintStmt(t)
+	case ExpressionStmt:
+		visitExpressionStmt(t)
+		return nil
+	default:
+		panic(fmt.Sprintf("unknown type %T: %v", stmt, t))
+	}
+}
+
+func visitExpressionStmt(stmt ExpressionStmt) {
+	evaluate(stmt.expression)
+}
+
+func visitPrintStmt(stmt PrintStmt) error {
+	var value any
+	var err error
+	value, err = evaluate(stmt.expression)
+	if err != nil {
+		return fmt.Errorf("evaluating print printstmt expression: %w", err)
+	}
+	fmt.Println(stringify(value))
+	return nil
 }
 
 func isTruthy(object any) bool {

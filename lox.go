@@ -54,8 +54,11 @@ func run(source string) {
 	scanner := &Scanner{source: source}
 	tokens := scanner.scanTokens()
 
-	var parser Parser = NewParser(tokens)
-	var expression Expr = parser.parse()
+	parser := NewParser(tokens)
+	statements, err := parser.parse()
+	if err != nil {
+		panic(err)
+	}
 
 	// Stop if there was a syntax error.
 	if hadError {
@@ -65,7 +68,7 @@ func run(source string) {
 	// Uncomment to print the ast for debu
 	// fmt.Println(ASTPrint(expression))
 
-	interpret(expression)
+	interpret(statements)
 }
 
 func loxlineerror(line int, message string) {

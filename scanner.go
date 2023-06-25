@@ -141,8 +141,6 @@ func (s *Scanner) identifier() {
 	}
 
 	s.addToken(tokentype)
-
-	s.addToken(IDENTIFIER)
 }
 
 func (s *Scanner) string() {

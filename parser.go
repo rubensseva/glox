@@ -13,22 +13,52 @@ func NewParser(tokens []Token) Parser {
 	}
 }
 
-func (p *Parser) parse() Expr {
-	defer func() {
-		caught := recover()
-		if caught != nil {
-			fmt.Printf("caught a panic, rethrowing: %v\n", caught)
-			panic(caught)
+func (p *Parser) parse() ([]Stmt, error) {
+	statements := []Stmt{}
+	for !p.isAtEnd() {
+		stmt, err := p.statement()
+		if err != nil {
+			return nil, fmt.Errorf("parsing: %w", err)
 		}
-	}()
-
-	expr := p.expression()
-
-	return expr
+		statements = append(
+			statements,
+			stmt,
+		)
+	}
+	return statements, nil
 }
 
 func (p *Parser) expression() Expr {
 	return p.equality()
+}
+
+func (p *Parser) statement() (Stmt, error) {
+	if p.match(PRINT) {
+		return p.printStatement()
+	}
+	return p.expressionStatement()
+}
+
+func (p *Parser) printStatement() (Stmt, error) {
+	var value Expr = p.expression()
+	_, err := p.consume(SEMICOLON, "Expect ';' after value.")
+	if err != nil {
+		return nil, fmt.Errorf("consuming semicolon: %w", err)
+	}
+	return PrintStmt{
+		expression: value,
+	}, nil
+}
+
+func (p *Parser) expressionStatement() (Stmt, error) {
+	var expr Expr = p.expression()
+	_, err := p.consume(SEMICOLON, "Expect ';' after expression.")
+	if err != nil {
+		return nil, fmt.Errorf("soncuming semicolon: %w", err)
+	}
+	return ExpressionStmt{
+		expression: expr,
+	}, nil
 }
 
 // match checks if the current token matches any of the types
