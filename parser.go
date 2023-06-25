@@ -16,10 +16,7 @@ func NewParser(tokens []Token) Parser {
 func (p *Parser) parse() ([]Stmt, error) {
 	statements := []Stmt{}
 	for !p.isAtEnd() {
-		stmt, err := p.statement()
-		if err != nil {
-			return nil, fmt.Errorf("parsing: %w", err)
-		}
+		stmt := p.declaration()
 		statements = append(
 			statements,
 			stmt,
@@ -29,7 +26,43 @@ func (p *Parser) parse() ([]Stmt, error) {
 }
 
 func (p *Parser) expression() Expr {
-	return p.equality()
+	return p.assignment()
+}
+
+func (p *Parser) declaration() Stmt {
+	// try
+	var err error
+	var res Stmt
+	if p.match(VAR) {
+		res, err = p.varDeclaration()
+	} else {
+		res, err = p.statement()
+	}
+	if err != nil {
+		fmt.Printf("warning: encountered error but ignoring and synchronizing instead. The ignored error is: %v\n", err)
+		p.synchronize()
+		return nil
+	}
+	return res
+}
+
+func (p *Parser) varDeclaration() (Stmt, error) {
+	name, err := p.consume(IDENTIFIER, "Expect variable name.")
+	if err != nil {
+		return nil, fmt.Errorf("consuming identifier: %w", err)
+	}
+	var initializer Expr = nil
+	if p.match(EQUAL) {
+		initializer = p.expression()
+	}
+
+	if _, err := p.consume(SEMICOLON, "Expect ';' after variable declaration."); err != nil {
+		return nil, fmt.Errorf("consuming semicolon: %w", err)
+	}
+	return VarStmt{
+		name:        name,
+		initializer: initializer,
+	}, nil
 }
 
 func (p *Parser) statement() (Stmt, error) {
@@ -59,6 +92,28 @@ func (p *Parser) expressionStatement() (Stmt, error) {
 	return ExpressionStmt{
 		expression: expr,
 	}, nil
+}
+
+func (p *Parser) assignment() Expr {
+	var expr Expr = p.equality()
+
+	if p.match(EQUAL) {
+		equals := p.previous()
+		value := p.assignment()
+
+		foo, ok := expr.(Variable)
+		if ok {
+			var name Token = foo.name
+			return Assign{
+				name:  name,
+				value: value,
+			}
+		}
+
+		loxtokenerror(equals, "Invalid assignment target.")
+	}
+
+	return expr
 }
 
 // match checks if the current token matches any of the types
@@ -234,6 +289,12 @@ func (p *Parser) primary() Expr {
 	if p.match(NUMBER, STRING) {
 		return Literal{
 			value: p.previous().literal,
+		}
+	}
+
+	if p.match(IDENTIFIER) {
+		return Variable{
+			name: p.previous(),
 		}
 	}
 

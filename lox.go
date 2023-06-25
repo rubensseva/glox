@@ -11,6 +11,14 @@ var (
 	hadRuntimeError bool
 )
 
+// Making this global because it is a static field on the Lox class in the book
+// https://craftinginterpreters.com/evaluating-expressions.html#running-the-interpreter
+var interpreter = Interpreter{
+	ENvironment: Environment{
+		values: make(map[string]any),
+	},
+}
+
 func lmain() {
 	switch {
 	case len(os.Args) > 2:
@@ -68,7 +76,7 @@ func run(source string) {
 	// Uncomment to print the ast for debu
 	// fmt.Println(ASTPrint(expression))
 
-	interpret(statements)
+	interpreter.interpret(statements)
 }
 
 func loxlineerror(line int, message string) {
@@ -76,9 +84,7 @@ func loxlineerror(line int, message string) {
 }
 
 func runtimeError(err RuntimeError) {
-	// fmt.Printf(err.Error() +
-	//     "\n[line " + err.token.line + "]")
-	fmt.Printf("RUNTIME ERROR: %v\n[line%v]", err, err.token.line)
+	fmt.Printf("RUNTIME ERROR: %v\n[line %v]\n", err, err.token.line)
 	hadRuntimeError = true
 }
 

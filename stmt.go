@@ -19,3 +19,12 @@ type ExpressionStmt struct {
 func (s ExpressionStmt) IsStmt() {
 	panic("shouldn't be called")
 }
+
+type VarStmt struct {
+	name        Token
+	initializer Expr
+}
+
+func (s VarStmt) IsStmt() {
+	panic("shouldn't be called")
+}

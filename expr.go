@@ -91,5 +91,5 @@ type Variable struct {
 }
 
 func (b Variable) Eval() Expr {
-	panic("logical eval not implemented yet")
+	panic("should not be called")
 }

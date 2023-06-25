@@ -5,9 +5,14 @@ import (
 	"fmt"
 )
 
-func interpret(statements []Stmt) {
+type Interpreter struct {
+	// Using ENvironment name on purpose to closely match the book
+	ENvironment Environment
+}
+
+func (i *Interpreter) interpret(statements []Stmt) {
 	for _, statement := range statements {
-		err := execute(statement)
+		err := i.execute(statement)
 		if err != nil {
 			var trgt RuntimeError
 			if errors.As(err, &trgt) {
@@ -19,19 +24,6 @@ func interpret(statements []Stmt) {
 		}
 	}
 }
-
-// func interpret(expression Expr) {
-// 	value, err := evaluate(expression)
-// 	if err != nil {
-// 		var trgt RuntimeError
-// 		if errors.As(err, &trgt) {
-// 			runtimeError(trgt)
-// 		} else {
-// 			panic(err)
-// 		}
-// 	}
-// 	fmt.Println(stringify(value))
-// }
 
 func checkNumberOperand(operator Token, operand any) error {
 	_, ok := operand.(float64)
@@ -57,46 +49,72 @@ func checkNumberOperands(operator Token, left any, right any) error {
 	return nil
 }
 
-func evaluate(expr Expr) (any, error) {
+func (i *Interpreter) evaluate(expr Expr) (any, error) {
 	switch t := expr.(type) {
 	case Binary:
-		return evalBinary(t)
+		return i.evalBinary(t)
 	case Grouping:
-		return evalGrouping(t)
+		return i.evalGrouping(t)
 	case Literal:
-		return evalLiteral(t), nil
+		return i.evalLiteral(t), nil
 	case Unary:
-		return evalUnary(t)
+		return i.evalUnary(t)
+	case Variable:
+		return i.visitVariableExpr(t)
 	default:
-		panic(fmt.Sprintf("unknown type %T: %v", expr, t))
+		panic(fmt.Sprintf("eval: unknown type %T: %v", expr, t))
 	}
 }
 
-func execute(stmt Stmt) error {
+func (i *Interpreter) execute(stmt Stmt) error {
 	switch t := stmt.(type) {
 	case PrintStmt:
-		return visitPrintStmt(t)
+		return i.visitPrintStmt(t)
+	case VarStmt:
+		return i.visitVarStmt(t)
 	case ExpressionStmt:
-		visitExpressionStmt(t)
+		i.visitExpressionStmt(t)
 		return nil
 	default:
-		panic(fmt.Sprintf("unknown type %T: %v", stmt, t))
+		panic(fmt.Sprintf("executing: unknown type %T: %v", stmt, t))
 	}
 }
 
-func visitExpressionStmt(stmt ExpressionStmt) {
-	evaluate(stmt.expression)
+func (i *Interpreter) visitExpressionStmt(stmt ExpressionStmt) {
+	i.evaluate(stmt.expression)
 }
 
-func visitPrintStmt(stmt PrintStmt) error {
+func (i Interpreter) visitPrintStmt(stmt PrintStmt) error {
 	var value any
 	var err error
-	value, err = evaluate(stmt.expression)
+	value, err = i.evaluate(stmt.expression)
 	if err != nil {
 		return fmt.Errorf("evaluating print printstmt expression: %w", err)
 	}
 	fmt.Println(stringify(value))
 	return nil
+}
+
+func (i *Interpreter) visitVarStmt(stmt VarStmt) error {
+	var value any = nil
+	if stmt.initializer != nil {
+		v, err := i.evaluate(stmt.initializer)
+		if err != nil {
+			return fmt.Errorf("evaluating initializer: %w", err)
+		}
+		value = v
+	}
+	i.ENvironment.define(stmt.name.lexeme, value)
+	return nil
+}
+
+func (i *Interpreter) visitAssignExpr(expr Assign) (any, error) {
+	value, err := i.evaluate(expr)
+	if err != nil {
+		return nil, fmt.Errorf("evaluating assignment expression: %w", err)
+	}
+	i.ENvironment.assign(expr.name, value)
+	return value, nil
 }
 
 func isTruthy(object any) bool {
@@ -126,12 +144,12 @@ func stringify(object any) string {
 	return fmt.Sprintf("%v", object)
 }
 
-func evalBinary(expr Binary) (any, error) {
-	left, err := evaluate(expr.left)
+func (i *Interpreter) evalBinary(expr Binary) (any, error) {
+	left, err := i.evaluate(expr.left)
 	if err != nil {
 		return nil, err
 	}
-	right, err := evaluate(expr.right)
+	right, err := i.evaluate(expr.right)
 	if err != nil {
 		return nil, err
 	}
@@ -212,16 +230,16 @@ func evalBinary(expr Binary) (any, error) {
 	return nil, fmt.Errorf("eval binary: should never get here...")
 }
 
-func evalGrouping(expr Grouping) (any, error) {
-	return evaluate(expr.expression)
+func (i *Interpreter) evalGrouping(expr Grouping) (any, error) {
+	return i.evaluate(expr.expression)
 }
 
-func evalLiteral(expr Literal) any {
+func (i *Interpreter) evalLiteral(expr Literal) any {
 	return expr.value
 }
 
-func evalUnary(expr Unary) (any, error) {
-	right, err := evaluate(expr.right)
+func (i *Interpreter) evalUnary(expr Unary) (any, error) {
+	right, err := i.evaluate(expr.right)
 	if err != nil {
 		return nil, err
 	}
@@ -239,4 +257,8 @@ func evalUnary(expr Unary) (any, error) {
 	// Unreachable
 	panic("eval unary: should never get here...")
 	return nil, fmt.Errorf("eval unary: should never get here...")
+}
+
+func (i *Interpreter) visitVariableExpr(expr Variable) (any, error) {
+	return i.ENvironment.get(expr.name)
 }
