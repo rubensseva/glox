@@ -28,3 +28,11 @@ type VarStmt struct {
 func (s VarStmt) IsStmt() {
 	panic("shouldn't be called")
 }
+
+type BlockStmt struct {
+	statements []Stmt
+}
+
+func (s BlockStmt) IsStmt() {
+	panic("shouldn't be called")
+}

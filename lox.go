@@ -14,7 +14,7 @@ var (
 // Making this global because it is a static field on the Lox class in the book
 // https://craftinginterpreters.com/evaluating-expressions.html#running-the-interpreter
 var interpreter = Interpreter{
-	ENvironment: Environment{
+	ENvironment: &Environment{
 		values: make(map[string]any),
 	},
 }
@@ -25,7 +25,7 @@ func lmain() {
 		fmt.Println("Usage: glox [script]")
 		os.Exit(64)
 	case len(os.Args) == 2:
-		runFile(os.Args[0])
+		runFile(os.Args[1])
 	default:
 		runPrompt()
 	}

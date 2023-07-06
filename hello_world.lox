@@ -1,5 +1,0 @@
-fun add(x, y) {
-    return x + y;
-}
-print "hello world";
-print add(1, 2);

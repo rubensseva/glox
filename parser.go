@@ -69,6 +69,14 @@ func (p *Parser) statement() (Stmt, error) {
 	if p.match(PRINT) {
 		return p.printStatement()
 	}
+
+	// https://craftinginterpreters.com/statements-and-state.html#block-syntax-and-semantics
+	if p.match(LEFT_BRACE) {
+		return BlockStmt{
+			statements: p.block(),
+		}, nil
+	}
+
 	return p.expressionStatement()
 }
 
@@ -92,6 +100,18 @@ func (p *Parser) expressionStatement() (Stmt, error) {
 	return ExpressionStmt{
 		expression: expr,
 	}, nil
+}
+
+func (p *Parser) block() []Stmt {
+	var statements []Stmt
+	for !p.check(RIGHT_BRACE) && !p.isAtEnd() {
+		statements = append(
+			statements,
+			p.declaration(),
+		)
+	}
+	p.consume(RIGHT_BRACE, "Expect '}' after block.")
+	return statements
 }
 
 func (p *Parser) assignment() Expr {

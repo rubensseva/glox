@@ -7,7 +7,7 @@ import (
 
 type Interpreter struct {
 	// Using ENvironment name on purpose to closely match the book
-	ENvironment Environment
+	ENvironment *Environment
 }
 
 func (i *Interpreter) interpret(statements []Stmt) {
@@ -75,9 +75,37 @@ func (i *Interpreter) execute(stmt Stmt) error {
 	case ExpressionStmt:
 		i.visitExpressionStmt(t)
 		return nil
+	case BlockStmt:
+		i.visitBlockStmt(t)
+		return nil
 	default:
 		panic(fmt.Sprintf("executing: unknown type %T: %v", stmt, t))
 	}
+}
+
+func (i *Interpreter) executeBlock(statements []Stmt, environment *Environment) error {
+	// https://craftinginterpreters.com/statements-and-state.html#block-syntax-and-semantics
+	previous := i.ENvironment
+	defer func() {
+		i.ENvironment = previous
+	}()
+
+	i.ENvironment = environment
+	for _, statement := range statements {
+		if err := i.execute(statement); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+
+
+func (i *Interpreter) visitBlockStmt(stmt BlockStmt) {
+	i.executeBlock(stmt.statements, &Environment{
+		values: map[string]any{},
+		enclosing: i.ENvironment,
+	})
 }
 
 func (i *Interpreter) visitExpressionStmt(stmt ExpressionStmt) {
