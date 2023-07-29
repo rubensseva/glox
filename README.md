@@ -7,7 +7,24 @@ non-idiomatic to some degree.
 
 ### Grammer (so far)
 
+Grammar syntax:
 ```
+
+* : zero or more repetitions
+| : or 
+
+```
+
+
+```
+program        → statement* EOF ;
+
+statement      → exprStmt
+               | printStmt ;
+               
+exprStmt       → expression ";" ;
+printStmt      → "print" expression ";" ;
+
 expression     → equality ;
 equality       → comparison ( ( "!=" | "==" ) comparison )* ;
 comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
