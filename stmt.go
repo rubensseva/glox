@@ -36,3 +36,13 @@ type BlockStmt struct {
 func (s BlockStmt) IsStmt() {
 	panic("shouldn't be called")
 }
+
+type IfStmt struct {
+	condition Expr
+	thenBranch Stmt
+	elseBranch Stmt
+}
+
+func (s IfStmt) IsStmt() {
+	panic("shouldn't be called")
+}

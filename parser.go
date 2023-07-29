@@ -66,6 +66,9 @@ func (p *Parser) varDeclaration() (Stmt, error) {
 }
 
 func (p *Parser) statement() (Stmt, error) {
+	if p.match(IF) {
+		return p.ifStatement()
+	}
 	if p.match(PRINT) {
 		return p.printStatement()
 	}
@@ -78,6 +81,32 @@ func (p *Parser) statement() (Stmt, error) {
 	}
 
 	return p.expressionStatement()
+}
+
+func (p *Parser) ifStatement() (Stmt, error) {
+	p.consume(LEFT_PAREN, "Expect '(' after if condition.")
+	condition := p.expression()
+	p.consume(RIGHT_PAREN, "Expect ')' after if condition.")
+
+	thenBranch, err := p.statement()
+	if err != nil {
+		return nil, fmt.Errorf("getting statement for then branch: %w", err)
+	}
+	// TODO: Careful! Using nil interface here.. does it work?
+	var elseBranch Stmt = nil
+	if (p.match(ELSE)) {
+		tmp, err := p.statement()
+		if err != nil {
+			return nil, fmt.Errorf("getting statement for else branch: %w", err)
+		}
+		elseBranch = tmp
+	}
+
+	return IfStmt{
+		condition:  condition,
+		thenBranch: thenBranch,
+		elseBranch: elseBranch,
+	}, nil
 }
 
 func (p *Parser) printStatement() (Stmt, error) {

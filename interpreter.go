@@ -78,6 +78,11 @@ func (i *Interpreter) execute(stmt Stmt) error {
 	case BlockStmt:
 		i.visitBlockStmt(t)
 		return nil
+	case IfStmt:
+		if err := i.visitIfStmt(t); err != nil {
+			return fmt.Errorf("visiting if statemenet: %w", err)
+		}
+		return nil
 	default:
 		panic(fmt.Sprintf("executing: unknown type %T: %v", stmt, t))
 	}
@@ -110,6 +115,20 @@ func (i *Interpreter) visitBlockStmt(stmt BlockStmt) {
 
 func (i *Interpreter) visitExpressionStmt(stmt ExpressionStmt) {
 	i.evaluate(stmt.expression)
+}
+
+// https://craftinginterpreters.com/control-flow.html#conditional-execution
+func (i *Interpreter) visitIfStmt(stmt IfStmt) error {
+	evres, err := i.evaluate(stmt.condition)
+	if err != nil {
+		return fmt.Errorf("evaluating condition: %w", err)
+	}
+	if isTruthy(evres) {
+		i.execute(stmt.thenBranch)
+	} else if stmt.elseBranch != nil {
+		i.execute(stmt.elseBranch)
+	}
+	return nil
 }
 
 func (i Interpreter) visitPrintStmt(stmt PrintStmt) error {
