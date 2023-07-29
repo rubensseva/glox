@@ -1,0 +1,2 @@
+var x = "hello";
+if (x == "hello") print "was hello!"; else print "was not hello...";
