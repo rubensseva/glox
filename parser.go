@@ -81,6 +81,9 @@ func (p *Parser) whileStatement() (Stmt, error) {
 }
 
 func (p *Parser) statement() (Stmt, error) {
+	if p.match(FOR) {
+		return p.forStatement()
+	}
 	if p.match(IF) {
 		return p.ifStatement()
 	}
@@ -99,6 +102,87 @@ func (p *Parser) statement() (Stmt, error) {
 	}
 
 	return p.expressionStatement()
+}
+
+func (p *Parser) forStatement() (Stmt, error) {
+	var zero Stmt = nil
+	p.consume(LEFT_PAREN, "Expect '(' after 'for'.")
+
+	var initializer Stmt
+	var initializerIsSet bool
+
+	if p.match(SEMICOLON) {
+		initializerIsSet = false
+		// initializer = nil
+	} else if p.match(VAR) {
+		tmp, err := p.varDeclaration()
+		if err != nil {
+			return zero, fmt.Errorf("handling initializer var declaration: %w", err)
+		}
+		initializer = tmp
+		initializerIsSet = true
+	} else {
+		tmp, err := p.expressionStatement()
+		if err != nil {
+			return zero, fmt.Errorf("handling initializer expr stmt: %w", err)
+		}
+		initializer = tmp
+		initializerIsSet = true
+	}
+
+	var condition Expr
+	var conditionIsSet bool
+	if !p.check(SEMICOLON) {
+		condition = p.expression()
+		conditionIsSet = true
+	}
+	p.consume(SEMICOLON, "Expect ';' after loop condition.");
+
+	var increment Expr
+	var incrementIsSet bool
+	if !p.check(RIGHT_PAREN) {
+		increment = p.expression()
+		incrementIsSet = true
+	}
+	p.consume(RIGHT_PAREN, "Expect ')' after for clauses.")
+
+	body, err := p.statement()
+	if err != nil {
+		return zero, fmt.Errorf("getting statement in for loop desugaring: %w", err)
+	}
+
+	if incrementIsSet {
+		body = BlockStmt{
+			statements: []Stmt{
+				body,
+				ExpressionStmt{
+					expression: increment,
+				},
+			},
+		}
+	}
+
+	// Note reverse check
+	if !conditionIsSet {
+		condition = Literal{
+			value: true,
+		}
+	}
+
+	body = WhileStmt{
+		condition: condition,
+		body:      body,
+	}
+
+
+	if initializerIsSet {
+		body = BlockStmt{
+			statements: []Stmt{initializer, body},
+		}
+	}
+
+	return body, nil
+
 }
 
 func (p *Parser) ifStatement() (Stmt, error) {
