@@ -52,13 +52,13 @@ func checkNumberOperands(operator Token, left any, right any) error {
 func (i *Interpreter) evaluate(expr Expr) (any, error) {
 	switch t := expr.(type) {
 	case Binary:
-		return i.evalBinary(t)
+		return i.visitBinaryExpr(t)
 	case Grouping:
-		return i.evalGrouping(t)
+		return i.visitGroupingExpr(t)
 	case Literal:
-		return i.evalLiteral(t), nil
+		return i.visitLiteralExpr(t), nil
 	case Unary:
-		return i.evalUnary(t)
+		return i.visitUnaryExpr(t)
 	case Variable:
 		return i.visitVariableExpr(t)
 	case Logical:
@@ -193,7 +193,7 @@ func stringify(object any) string {
 	return fmt.Sprintf("%v", object)
 }
 
-func (i *Interpreter) evalBinary(expr Binary) (any, error) {
+func (i *Interpreter) visitBinaryExpr(expr Binary) (any, error) {
 	left, err := i.evaluate(expr.left)
 	if err != nil {
 		return nil, err
@@ -279,11 +279,11 @@ func (i *Interpreter) evalBinary(expr Binary) (any, error) {
 	return nil, fmt.Errorf("eval binary: should never get here...")
 }
 
-func (i *Interpreter) evalGrouping(expr Grouping) (any, error) {
+func (i *Interpreter) visitGroupingExpr(expr Grouping) (any, error) {
 	return i.evaluate(expr.expression)
 }
 
-func (i *Interpreter) evalLiteral(expr Literal) any {
+func (i *Interpreter) visitLiteralExpr(expr Literal) any {
 	return expr.value
 }
 
@@ -312,7 +312,7 @@ func (i *Interpreter) visitLogicalExpr(expr Logical) (any, error) {
 	return res, nil
 }
 
-func (i *Interpreter) evalUnary(expr Unary) (any, error) {
+func (i *Interpreter) visitUnaryExpr(expr Unary) (any, error) {
 	right, err := i.evaluate(expr.right)
 	if err != nil {
 		return nil, err
