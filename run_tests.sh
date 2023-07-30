@@ -14,6 +14,17 @@ test () {
     fi
 }
 
+test "hello_world.lox" "Hello, World!"
+
+test "scope_test.lox" "inner a
+outer b
+global c
+outer a
+outer b
+global c
+global a
+global b
+global c"
 
 test "if_test.lox" "was hello!"
 test "and_or.lox" "hi
