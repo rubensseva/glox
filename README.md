@@ -7,10 +7,12 @@ non-idiomatic to some degree.
 
 ### Grammer (so far)
 
-Grammar syntax:
+Grammar syntax ( https://craftinginterpreters.com/representing-code.html#enhancing-our-notation ) :
+
 ```
 
 * : zero or more repetitions
+? : zero or one
 | : or 
 
 ```
@@ -25,8 +27,12 @@ declaration    → varDecl
 varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
 
 statement      → exprStmt
+               | ifStmt
                | printStmt
                | block ;
+
+ifStmt         → "if" "(" expression ")" statement
+               ( "else" statement )? ;
                
 block          → "{" declaration* "}" ;
                
