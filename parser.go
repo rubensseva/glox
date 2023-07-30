@@ -66,8 +66,8 @@ func (p *Parser) varDeclaration() (Stmt, error) {
 }
 
 func (p *Parser) whileStatement() (Stmt, error) {
-	p.consume(LEFT_PAREN, "Expect '(' after 'while'.");
-	condition := p.expression();
+	p.consume(LEFT_PAREN, "Expect '(' after 'while'.")
+	condition := p.expression()
 	p.consume(RIGHT_PAREN, "Expect ')' after condition.")
 
 	body, err := p.statement()
@@ -136,7 +136,7 @@ func (p *Parser) forStatement() (Stmt, error) {
 		condition = p.expression()
 		conditionIsSet = true
 	}
-	p.consume(SEMICOLON, "Expect ';' after loop condition.");
+	p.consume(SEMICOLON, "Expect ';' after loop condition.")
 
 	var increment Expr
 	var incrementIsSet bool
@@ -174,7 +174,6 @@ func (p *Parser) forStatement() (Stmt, error) {
 		body:      body,
 	}
 
-
 	if initializerIsSet {
 		body = BlockStmt{
 			statements: []Stmt{initializer, body},
@@ -196,7 +195,7 @@ func (p *Parser) ifStatement() (Stmt, error) {
 	}
 	// TODO: Careful! Using nil interface here.. does it work?
 	var elseBranch Stmt = nil
-	if (p.match(ELSE)) {
+	if p.match(ELSE) {
 		tmp, err := p.statement()
 		if err != nil {
 			return nil, fmt.Errorf("getting statement for else branch: %w", err)
@@ -298,7 +297,6 @@ func (p *Parser) and() Expr {
 
 	return expr
 }
-
 
 // match checks if the current token matches any of the types
 // in the input arg(s). If it matches, consume the token

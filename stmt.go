@@ -38,7 +38,7 @@ func (s BlockStmt) IsStmt() {
 }
 
 type IfStmt struct {
-	condition Expr
+	condition  Expr
 	thenBranch Stmt
 	elseBranch Stmt
 }
@@ -49,7 +49,7 @@ func (s IfStmt) IsStmt() {
 
 type WhileStmt struct {
 	condition Expr
-	body Stmt
+	body      Stmt
 }
 
 func (s WhileStmt) IsStmt() {

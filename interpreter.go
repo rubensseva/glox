@@ -113,11 +113,9 @@ func (i *Interpreter) executeBlock(statements []Stmt, environment *Environment) 
 	return nil
 }
 
-
-
 func (i *Interpreter) visitBlockStmt(stmt BlockStmt) {
 	i.executeBlock(stmt.statements, &Environment{
-		values: map[string]any{},
+		values:    map[string]any{},
 		enclosing: i.ENvironment,
 	})
 }

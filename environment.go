@@ -4,7 +4,7 @@ import "fmt"
 
 type Environment struct {
 	enclosing *Environment // https://craftinginterpreters.com/statements-and-state.html#nesting-and-shadowing
-	values map[string]any
+	values    map[string]any
 }
 
 func (e *Environment) define(name string, value any) {
