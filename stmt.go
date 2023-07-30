@@ -46,3 +46,12 @@ type IfStmt struct {
 func (s IfStmt) IsStmt() {
 	panic("shouldn't be called")
 }
+
+type WhileStmt struct {
+	condition Expr
+	body Stmt
+}
+
+func (s WhileStmt) IsStmt() {
+	panic("shouldn't be called")
+}

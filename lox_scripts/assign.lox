@@ -1,0 +1,7 @@
+var a = "init";
+print a;
+
+a = "after";
+print a;
+
+print a = "last";

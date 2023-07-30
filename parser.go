@@ -65,12 +65,30 @@ func (p *Parser) varDeclaration() (Stmt, error) {
 	}, nil
 }
 
+func (p *Parser) whileStatement() (Stmt, error) {
+	p.consume(LEFT_PAREN, "Expect '(' after 'while'.");
+	condition := p.expression();
+	p.consume(RIGHT_PAREN, "Expect ')' after condition.")
+
+	body, err := p.statement()
+	if err != nil {
+		return nil, fmt.Errorf("getting statement for body: %w", err)
+	}
+	return WhileStmt{
+		condition: condition,
+		body:      body,
+	}, nil
+}
+
 func (p *Parser) statement() (Stmt, error) {
 	if p.match(IF) {
 		return p.ifStatement()
 	}
 	if p.match(PRINT) {
 		return p.printStatement()
+	}
+	if p.match(WHILE) {
+		return p.whileStatement()
 	}
 
 	// https://craftinginterpreters.com/statements-and-state.html#block-syntax-and-semantics

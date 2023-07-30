@@ -29,3 +29,7 @@ global c"
 test "if_test.lox" "was hello!"
 test "and_or.lox" "hi
 yes"
+
+test "assign.lox" "init
+after
+last"

@@ -63,6 +63,8 @@ func (i *Interpreter) evaluate(expr Expr) (any, error) {
 		return i.visitVariableExpr(t)
 	case Logical:
 		return i.visitLogicalExpr(t)
+	case Assign:
+		return i.visitAssignExpr(t)
 	default:
 		panic(fmt.Sprintf("eval: unknown type %T: %v", expr, t))
 	}
@@ -83,6 +85,11 @@ func (i *Interpreter) execute(stmt Stmt) error {
 	case IfStmt:
 		if err := i.visitIfStmt(t); err != nil {
 			return fmt.Errorf("visiting if statemenet: %w", err)
+		}
+		return nil
+	case WhileStmt:
+		if err := i.visitWhileStmt(t); err != nil {
+			return fmt.Errorf("visiting wihle statement: %w", err)
 		}
 		return nil
 	default:
@@ -157,8 +164,22 @@ func (i *Interpreter) visitVarStmt(stmt VarStmt) error {
 	return nil
 }
 
+func (i *Interpreter) visitWhileStmt(stmt WhileStmt) error {
+	for {
+		condEvald, err := i.evaluate(stmt.condition)
+		if err != nil {
+			return fmt.Errorf("evaluating stmt condition in while loop: %w", err)
+		}
+		if !isTruthy(condEvald) {
+			break
+		}
+		i.execute(stmt.body)
+	}
+	return nil
+}
+
 func (i *Interpreter) visitAssignExpr(expr Assign) (any, error) {
-	value, err := i.evaluate(expr)
+	value, err := i.evaluate(expr.value)
 	if err != nil {
 		return nil, fmt.Errorf("evaluating assignment expression: %w", err)
 	}
