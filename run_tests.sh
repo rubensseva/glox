@@ -1,11 +1,20 @@
 #!/usr/bin/env sh
 
-RES=$(go run . lox_scripts/if_test.lox)
-EXP="was hello!"
+test () {
+    SCRIPT_NAME=$1
+    RES=$(go run . lox_scripts/${SCRIPT_NAME})
 
-if [ "${RES}" = "${EXP}" ]; then
-    echo "test passed"
-else
-    echo "test failed"
-    echo "expected \"${EXP}\" to be equal to \"${RES}\""
-fi
+    EXP=$2
+
+    if [ "${RES}" = "${EXP}" ]; then
+        echo "${SCRIPT_NAME}: passed"
+    else
+        echo "test failed"
+        echo "${SCRIPT_NAME}: expected \"${EXP}\" to be equal to \"${RES}\""
+    fi
+}
+
+
+test "if_test.lox" "was hello!"
+test "and_or.lox" "hi
+yes"
