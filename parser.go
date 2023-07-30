@@ -144,7 +144,7 @@ func (p *Parser) block() []Stmt {
 }
 
 func (p *Parser) assignment() Expr {
-	var expr Expr = p.equality()
+	var expr Expr = p.or()
 
 	if p.match(EQUAL) {
 		equals := p.previous()
@@ -164,6 +164,39 @@ func (p *Parser) assignment() Expr {
 
 	return expr
 }
+
+func (p *Parser) or() Expr {
+	var expr Expr = p.and()
+
+	for p.match(OR) {
+		var operator Token = p.previous()
+		var right Expr = p.and()
+		expr = Logical{
+			left:     expr,
+			operator: operator,
+			right:    right,
+		}
+	}
+
+	return expr
+}
+
+func (p *Parser) and() Expr {
+	var expr Expr = p.equality()
+
+	for p.match(AND) {
+		var operator Token = p.previous()
+		var right Expr = p.equality()
+		expr = Logical{
+			left:     expr,
+			operator: operator,
+			right:    right,
+		}
+	}
+
+	return expr
+}
+
 
 // match checks if the current token matches any of the types
 // in the input arg(s). If it matches, consume the token

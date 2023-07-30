@@ -61,6 +61,8 @@ func (i *Interpreter) evaluate(expr Expr) (any, error) {
 		return i.evalUnary(t)
 	case Variable:
 		return i.visitVariableExpr(t)
+	case Logical:
+		return i.visitLogicalExpr(t)
 	default:
 		panic(fmt.Sprintf("eval: unknown type %T: %v", expr, t))
 	}
@@ -283,6 +285,31 @@ func (i *Interpreter) evalGrouping(expr Grouping) (any, error) {
 
 func (i *Interpreter) evalLiteral(expr Literal) any {
 	return expr.value
+}
+
+func (i *Interpreter) visitLogicalExpr(expr Logical) (any, error) {
+	left, err := i.evaluate(expr.left)
+	if err != nil {
+		return nil, fmt.Errorf("evaluating left expr of logical expr: %w", err)
+	}
+
+	if expr.operator.tokenType == OR {
+		if isTruthy(left) {
+			return left, nil
+		}
+	} else {
+		// I think this branch means that we assume expr.operator.tokenType == AND ?
+		// See chapter 9.3
+		if !isTruthy(left) {
+			return left, nil
+		}
+	}
+
+	res, err := i.evaluate(expr.right)
+	if err != nil {
+		return nil, fmt.Errorf("evaluating right expr: %w", err)
+	}
+	return res, nil
 }
 
 func (i *Interpreter) evalUnary(expr Unary) (any, error) {
