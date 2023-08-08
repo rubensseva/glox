@@ -25,8 +25,12 @@ func (p *Parser) parse() ([]Stmt, error) {
 	return statements, nil
 }
 
-func (p *Parser) expression() Expr {
-	return p.assignment()
+func (p *Parser) expression() (Expr, error) {
+	expr, err := p.assignment()
+	if err != nil {
+		return nil, fmt.Errorf("assignment(): %w", err)
+	}
+	return expr, nil
 }
 
 func (p *Parser) declaration() Stmt {
@@ -53,7 +57,10 @@ func (p *Parser) varDeclaration() (Stmt, error) {
 	}
 	var initializer Expr = nil
 	if p.match(EQUAL) {
-		initializer = p.expression()
+		initializer, err = p.expression()
+		if err != nil {
+			return nil, fmt.Errorf("expression(): %w", err)
+		}
 	}
 
 	if _, err := p.consume(SEMICOLON, "Expect ';' after variable declaration."); err != nil {
@@ -67,7 +74,10 @@ func (p *Parser) varDeclaration() (Stmt, error) {
 
 func (p *Parser) whileStatement() (Stmt, error) {
 	p.consume(LEFT_PAREN, "Expect '(' after 'while'.")
-	condition := p.expression()
+	condition, err := p.expression()
+	if err != nil {
+		return nil, fmt.Errorf("expression(): %w", err)
+	}
 	p.consume(RIGHT_PAREN, "Expect ')' after condition.")
 
 	body, err := p.statement()
@@ -133,7 +143,12 @@ func (p *Parser) forStatement() (Stmt, error) {
 	var condition Expr
 	var conditionIsSet bool
 	if !p.check(SEMICOLON) {
-		condition = p.expression()
+		tmp, err := p.expression()
+		if err != nil {
+			return nil, fmt.Errorf("expression(): %w", err)
+		}
+		condition = tmp
+
 		conditionIsSet = true
 	}
 	p.consume(SEMICOLON, "Expect ';' after loop condition.")
@@ -141,7 +156,12 @@ func (p *Parser) forStatement() (Stmt, error) {
 	var increment Expr
 	var incrementIsSet bool
 	if !p.check(RIGHT_PAREN) {
-		increment = p.expression()
+		tmp, err := p.expression()
+		if err != nil {
+			return nil, fmt.Errorf("expression(): %w", err)
+		}
+		increment = tmp
+
 		incrementIsSet = true
 	}
 	p.consume(RIGHT_PAREN, "Expect ')' after for clauses.")
@@ -186,7 +206,10 @@ func (p *Parser) forStatement() (Stmt, error) {
 
 func (p *Parser) ifStatement() (Stmt, error) {
 	p.consume(LEFT_PAREN, "Expect '(' after if condition.")
-	condition := p.expression()
+	condition, err := p.expression()
+	if err != nil {
+		return nil, fmt.Errorf("expression(): %w", err)
+	}
 	p.consume(RIGHT_PAREN, "Expect ')' after if condition.")
 
 	thenBranch, err := p.statement()
@@ -211,9 +234,11 @@ func (p *Parser) ifStatement() (Stmt, error) {
 }
 
 func (p *Parser) printStatement() (Stmt, error) {
-	var value Expr = p.expression()
-	_, err := p.consume(SEMICOLON, "Expect ';' after value.")
+	value, err := p.expression()
 	if err != nil {
+		return nil, fmt.Errorf("expression(): %w", err)
+	}
+	if _, err := p.consume(SEMICOLON, "Expect ';' after value."); err != nil {
 		return nil, fmt.Errorf("consuming semicolon: %w", err)
 	}
 	return PrintStmt{
@@ -222,9 +247,11 @@ func (p *Parser) printStatement() (Stmt, error) {
 }
 
 func (p *Parser) expressionStatement() (Stmt, error) {
-	var expr Expr = p.expression()
-	_, err := p.consume(SEMICOLON, "Expect ';' after expression.")
+	expr, err := p.expression()
 	if err != nil {
+		return nil, fmt.Errorf("expression(): %w", err)
+	}
+	if _, err := p.consume(SEMICOLON, "Expect ';' after expression."); err != nil {
 		return nil, fmt.Errorf("soncuming semicolon: %w", err)
 	}
 	return ExpressionStmt{
@@ -244,12 +271,18 @@ func (p *Parser) block() []Stmt {
 	return statements
 }
 
-func (p *Parser) assignment() Expr {
-	var expr Expr = p.or()
+func (p *Parser) assignment() (Expr, error) {
+	expr, err := p.or()
+	if err != nil {
+		return nil, fmt.Errorf("or(): %w", err)
+	}
 
 	if p.match(EQUAL) {
 		equals := p.previous()
-		value := p.assignment()
+		value, err := p.assignment()
+		if err != nil {
+			return nil, fmt.Errorf("assignment(): %w", err)
+		}
 
 		foo, ok := expr.(Variable)
 		if ok {
@@ -257,21 +290,27 @@ func (p *Parser) assignment() Expr {
 			return Assign{
 				name:  name,
 				value: value,
-			}
+			}, nil
 		}
 
 		loxtokenerror(equals, "Invalid assignment target.")
 	}
 
-	return expr
+	return expr, nil
 }
 
-func (p *Parser) or() Expr {
-	var expr Expr = p.and()
+func (p *Parser) or() (Expr, error) {
+	expr, err := p.and()
+	if err != nil {
+		return nil, fmt.Errorf("and(): %w", err)
+	}
 
 	for p.match(OR) {
 		var operator Token = p.previous()
-		var right Expr = p.and()
+		right, err := p.and()
+		if err != nil {
+			return nil, fmt.Errorf("and(): %w", err)
+		}
 		expr = Logical{
 			left:     expr,
 			operator: operator,
@@ -279,15 +318,21 @@ func (p *Parser) or() Expr {
 		}
 	}
 
-	return expr
+	return expr, nil
 }
 
-func (p *Parser) and() Expr {
-	var expr Expr = p.equality()
+func (p *Parser) and() (Expr, error) {
+	expr, err := p.equality()
+	if err != nil {
+		return nil, fmt.Errorf("equality(): %w", err)
+	}
 
 	for p.match(AND) {
 		var operator Token = p.previous()
-		var right Expr = p.equality()
+		right, err := p.equality()
+		if err != nil {
+			return nil, fmt.Errorf("equality(): %w", err)
+		}
 		expr = Logical{
 			left:     expr,
 			operator: operator,
@@ -295,7 +340,7 @@ func (p *Parser) and() Expr {
 		}
 	}
 
-	return expr
+	return expr, nil
 }
 
 // match checks if the current token matches any of the types
@@ -374,12 +419,18 @@ func (p *Parser) previous() Token {
 	return p.tokens[p.current-1]
 }
 
-func (p *Parser) equality() Expr {
-	var expr Expr = p.comparison()
+func (p *Parser) equality() (Expr, error) {
+	expr, err := p.comparison()
+	if err != nil {
+		return nil, fmt.Errorf("comparison(): %w", err)
+	}
 
 	for p.match(BANG_EQUAL, EQUAL_EQUAL) {
 		var operator Token = p.previous()
-		var right Expr = p.comparison()
+		right, err := p.comparison()
+		if err != nil {
+			return nil, fmt.Errorf("comparison(): %w", err)
+		}
 		expr = Binary{
 			left:     expr,
 			operator: operator,
@@ -387,15 +438,21 @@ func (p *Parser) equality() Expr {
 		}
 	}
 
-	return expr
+	return expr, nil
 }
 
-func (p *Parser) comparison() Expr {
-	var expr Expr = p.term()
+func (p *Parser) comparison() (Expr, error) {
+	expr, err := p.term()
+	if err != nil {
+		return nil, fmt.Errorf("term(): %w", err)
+	}
 
 	for p.match(GREATER, GREATER_EQUAL, LESS, LESS_EQUAL) {
 		var operator Token = p.previous()
-		var right Expr = p.term()
+		right, err := p.term()
+		if err != nil {
+			return nil, fmt.Errorf("term(): %w", err)
+		}
 		expr = Binary{
 			left:     expr,
 			operator: operator,
@@ -403,15 +460,21 @@ func (p *Parser) comparison() Expr {
 		}
 	}
 
-	return expr
+	return expr, nil
 }
 
-func (p *Parser) term() Expr {
-	var expr Expr = p.factor()
+func (p *Parser) term() (Expr, error) {
+	expr, err := p.factor()
+	if err != nil {
+		return nil, fmt.Errorf("factor(): %w", err)
+	}
 
 	for p.match(MINUS, PLUS) {
 		var operator Token = p.previous()
-		var right Expr = p.factor()
+		right, err := p.factor()
+		if err != nil {
+			return nil, fmt.Errorf("factor(): %w", err)
+		}
 		expr = Binary{
 			left:     expr,
 			operator: operator,
@@ -419,15 +482,21 @@ func (p *Parser) term() Expr {
 		}
 	}
 
-	return expr
+	return expr, nil
 }
 
-func (p *Parser) factor() Expr {
-	var expr Expr = p.unary()
+func (p *Parser) factor() (Expr, error) {
+	expr, err := p.unary()
+	if err != nil {
+		return nil, fmt.Errorf("unary(): %w", err)
+	}
 
 	for p.match(SLASH, STAR) {
 		var operator Token = p.previous()
-		var right Expr = p.unary()
+		right, err := p.unary()
+		if err != nil {
+			return nil, fmt.Errorf("unary(): %w", err)
+		}
 		expr = Binary{
 			left:     expr,
 			operator: operator,
@@ -435,62 +504,123 @@ func (p *Parser) factor() Expr {
 		}
 	}
 
-	return expr
+	return expr, nil
 }
 
-func (p *Parser) unary() Expr {
+func (p *Parser) unary() (Expr, error) {
 	if p.match(BANG, MINUS) {
 		var operator Token = p.previous()
-		var right Expr = p.unary()
+		right, err := p.unary()
+		if err != nil {
+			return nil, fmt.Errorf("unary(): %w", err)
+		}
 		return Unary{
 			operator: operator,
 			right:    right,
+		}, nil
+	}
+
+	c, err := p.call()
+	if err != nil {
+		return nil, fmt.Errorf("call(): %w", err)
+	}
+	return c, nil
+}
+
+func (p *Parser) finishCall(callee Expr) (Expr, error) {
+	var arguments []Expr
+
+	if !p.check(RIGHT_PAREN) {
+		for true {
+			expr, err := p.expression()
+			if err != nil {
+				return nil, fmt.Errorf("expression(): %w", err)
+			}
+			arguments = append(
+				arguments,
+				expr,
+			)
+			if p.match(COMMA) {
+				break
+			}
 		}
 	}
 
-	return p.primary()
+	paren, err := p.consume(RIGHT_PAREN, "Expect ')' after arguments.")
+	if err != nil {
+		return nil, fmt.Errorf("consuming right paren: %w", err)
+	}
+
+	return Call{
+		callee:    callee,
+		paren:     paren,
+		arguments: arguments,
+	}, nil
 }
 
-func (p *Parser) primary() Expr {
+func (p *Parser) call() (Expr, error) {
+	expr, err := p.primary()
+	if err != nil {
+		return nil, fmt.Errorf("primary(): %w", err)
+	}
+
+	for true {
+		if p.match(LEFT_PAREN) {
+			tmp, err := p.finishCall(expr)
+			if err != nil {
+				return nil, fmt.Errorf("finishCall(): %w", err)
+			}
+			expr = tmp
+		} else {
+			break
+		}
+	}
+
+	return expr, nil
+}
+
+func (p *Parser) primary() (Expr, error) {
 	if p.match(FALSE) {
 		return Literal{
 			value: false,
-		}
+		}, nil
 	}
 	if p.match(TRUE) {
 		return Literal{
 			value: true,
-		}
+		}, nil
 	}
 	if p.match(NIL) {
 		return Literal{
 			value: nil,
-		}
+		}, nil
 	}
 
 	if p.match(NUMBER, STRING) {
 		return Literal{
 			value: p.previous().literal,
-		}
+		}, nil
 	}
 
 	if p.match(IDENTIFIER) {
 		return Variable{
 			name: p.previous(),
-		}
+		}, nil
 	}
 
 	if p.match(LEFT_PAREN) {
-		var expr Expr = p.expression()
-		_, err := p.consume(RIGHT_PAREN, "Expect ')' after expression.")
+		// TODO: Consider normal errors instead of panics()
+		expr, err := p.expression()
 		if err != nil {
-			panic(fmt.Errorf("trying to consume: %w", err))
+			return nil, fmt.Errorf("expression(): %w", err)
+		}
+		if _, err := p.consume(RIGHT_PAREN, "Expect ')' after expression."); err != nil {
+			return nil, fmt.Errorf("trying to consume: %w", err)
 		}
 		return Grouping{
 			expression: expr,
-		}
+		}, nil
 	}
 
-	// TODO: Should probaly return a custom error
-	panic(p.error(p.peek(), "Expect expression."))
+	return nil, fmt.Errorf("reached end of primary(): %w", p.error(p.peek(), "Expect expression."))
 }
