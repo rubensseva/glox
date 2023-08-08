@@ -66,3 +66,5 @@ test "for.lox" "0
 2584
 4181
 6765"
+
+test "func_simple.lox" "Hi, Dear Reader!"

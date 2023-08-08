@@ -77,6 +77,8 @@ func (i *Interpreter) evaluate(expr Expr) (any, error) {
 		return i.visitLogicalExpr(t)
 	case Assign:
 		return i.visitAssignExpr(t)
+	case Call:
+		return i.visitCallExpr(t)
 	default:
 		panic(fmt.Sprintf("eval: unknown type %T: %v", expr, t))
 	}
@@ -104,6 +106,9 @@ func (i *Interpreter) execute(stmt Stmt) error {
 			return fmt.Errorf("visiting wihle statement: %w", err)
 		}
 		return nil
+	case FunctionStmt:
+		i.visitFunctionStmt(t)
+		return nil
 	default:
 		panic(fmt.Sprintf("executing: unknown type %T: %v", stmt, t))
 	}
@@ -126,11 +131,21 @@ func (i *Interpreter) executeBlock(statements []Stmt, environment *Environment) 
 }
 
 func (i *Interpreter) visitBlockStmt(stmt BlockStmt) {
-	i.executeBlock(stmt.statements, NewEnvironment(i.ENvironment))
+	if err := i.executeBlock(stmt.statements, NewEnvironment(i.ENvironment)); err != nil {
+		panic(err)
+	}
 }
 
 func (i *Interpreter) visitExpressionStmt(stmt ExpressionStmt) {
-	i.evaluate(stmt.expression)
+	_, err := i.evaluate(stmt.expression)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (i *Interpreter) visitFunctionStmt(stmt FunctionStmt) {
+	function := NewLoxFunction(stmt)
+	i.ENvironment.define(stmt.name.lexeme, function)
 }
 
 // https://craftinginterpreters.com/control-flow.html#conditional-execution
@@ -333,7 +348,7 @@ func (i *Interpreter) visitCallExpr(expr Call) (any, error) {
 	if len(arguments) != function.Arity() {
 		return nil, RuntimeError{
 			token: expr.paren,
-			msg: fmt.Sprintf("Expected %s arguments but got %s.",
+			msg: fmt.Sprintf("Expected %d arguments but got %d.",
 				function.Arity(), len(arguments)),
 		}
 	}

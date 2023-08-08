@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"runtime/debug"
+)
 
 type Parser struct {
 	tokens  []Token
@@ -37,7 +40,9 @@ func (p *Parser) declaration() Stmt {
 	// try
 	var err error
 	var res Stmt
-	if p.match(VAR) {
+	if p.match(FUN) {
+		res, err = p.function("function")
+	} else if p.match(VAR) {
 		res, err = p.varDeclaration()
 	} else {
 		res, err = p.statement()
@@ -259,6 +264,55 @@ func (p *Parser) expressionStatement() (Stmt, error) {
 	}, nil
 }
 
+func (p *Parser) function(kind string) (FunctionStmt, error) {
+	var zero FunctionStmt
+
+	name, err := p.consume(IDENTIFIER, "Expect "+kind+" name.")
+	if err != nil {
+		return zero, fmt.Errorf("consuming identifier: %w", err)
+	}
+
+	if _, err := p.consume(LEFT_PAREN, "Expect '(' after "+kind+" name."); err != nil {
+		return zero, fmt.Errorf("consuming identifier: %w", err)
+	}
+
+	var parameters []Token
+	if !p.check(RIGHT_PAREN) {
+		for true {
+			if len(parameters) >= 255 {
+				p.error(p.peek(), "Can't have more than 255 parameters.")
+			}
+
+			tmp, err := p.consume(IDENTIFIER, "Expect parameter name.")
+			if err != nil {
+				return zero, fmt.Errorf("consuming identifier: %w", err)
+			}
+			parameters = append(
+				parameters,
+				tmp,
+			)
+
+			if !p.match(COMMA) {
+				break
+			}
+		}
+	}
+	if _, err := p.consume(RIGHT_PAREN, "Expect ')' after parameters."); err != nil {
+		return zero, fmt.Errorf("consuming RIGHT_PAREN: %w", err)
+	}
+
+	if _, err := p.consume(LEFT_BRACE, "Expect '{' before "+kind+" body."); err != nil {
+		return zero, fmt.Errorf("consuming LEFT_BRACE: %w", err)
+	}
+
+	body := p.block()
+	return FunctionStmt{
+		name:   name,
+		params: parameters,
+		body:   body,
+	}, nil
+}
+
 func (p *Parser) block() []Stmt {
 	var statements []Stmt
 	for !p.check(RIGHT_BRACE) && !p.isAtEnd() {
@@ -363,6 +417,7 @@ func (p *Parser) consume(tokentype TokenType, message string) (Token, error) {
 	}
 
 	err := p.error(p.peek(), message)
+	debug.PrintStack()
 	return Token{}, err
 }
 
@@ -543,7 +598,7 @@ func (p *Parser) finishCall(callee Expr) (Expr, error) {
 				arguments,
 				expr,
 			)
-			if p.match(COMMA) {
+			if !p.match(COMMA) {
 				break
 			}
 		}

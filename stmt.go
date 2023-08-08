@@ -55,3 +55,13 @@ type WhileStmt struct {
 func (s WhileStmt) IsStmt() {
 	panic("shouldn't be called")
 }
+
+type FunctionStmt struct {
+	name   Token
+	params []Token
+	body   []Stmt
+}
+
+func (s FunctionStmt) IsStmt() {
+	panic("shouldn't be called")
+}
