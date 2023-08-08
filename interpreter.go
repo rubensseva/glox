@@ -6,8 +6,20 @@ import (
 )
 
 type Interpreter struct {
+	globals *Environment
 	// Using ENvironment name on purpose to closely match the book
 	ENvironment *Environment
+}
+
+func NewInterpreter() *Interpreter {
+	interpreter := &Interpreter{
+		globals: NewEnvironment(nil),
+	}
+	interpreter.ENvironment = interpreter.globals
+
+	interpreter.globals.define("clock", &Clock{})
+
+	return interpreter
 }
 
 func (i *Interpreter) interpret(statements []Stmt) {
@@ -114,10 +126,7 @@ func (i *Interpreter) executeBlock(statements []Stmt, environment *Environment) 
 }
 
 func (i *Interpreter) visitBlockStmt(stmt BlockStmt) {
-	i.executeBlock(stmt.statements, &Environment{
-		values:    map[string]any{},
-		enclosing: i.ENvironment,
-	})
+	i.executeBlock(stmt.statements, NewEnvironment(i.ENvironment))
 }
 
 func (i *Interpreter) visitExpressionStmt(stmt ExpressionStmt) {
@@ -296,6 +305,44 @@ func (i *Interpreter) visitBinaryExpr(expr Binary) (any, error) {
 	// Unreachable
 	panic("eval binary: should never get here...")
 	return nil, fmt.Errorf("eval binary: should never get here...")
+}
+
+func (i *Interpreter) visitCallExpr(expr Call) (any, error) {
+	callee, err := i.evaluate(expr.callee)
+	if err != nil {
+		return nil, fmt.Errorf("evaluate(): %w", err)
+	}
+
+	var arguments []any
+	for _, argument := range expr.arguments {
+		e, err := i.evaluate(argument)
+		if err != nil {
+			return nil, fmt.Errorf("evaluate(): %w", err)
+		}
+		arguments = append(
+			arguments,
+			e,
+		)
+	}
+
+	// TODO: Mabe type cast instead?
+	function, ok := callee.(LoxCallable)
+	if !ok {
+		return nil, fmt.Errorf("callee was not a LoxCallable: %[1]v, %[1]T", callee)
+	}
+	if len(arguments) != function.Arity() {
+		return nil, RuntimeError{
+			token: expr.paren,
+			msg: fmt.Sprintf("Expected %s arguments but got %s.",
+				function.Arity(), len(arguments)),
+		}
+	}
+
+	res, err := function.Call(i, arguments)
+	if err != nil {
+		return nil, fmt.Errorf("LoxCallable.call(): %w", err)
+	}
+	return res, nil
 }
 
 func (i *Interpreter) visitGroupingExpr(expr Grouping) (any, error) {

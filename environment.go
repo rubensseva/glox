@@ -7,6 +7,13 @@ type Environment struct {
 	values    map[string]any
 }
 
+func NewEnvironment(enclosing *Environment) *Environment {
+	return &Environment{
+		enclosing: enclosing,
+		values:    make(map[string]any),
+	}
+}
+
 func (e *Environment) define(name string, value any) {
 	e.values[name] = value
 }

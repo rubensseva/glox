@@ -532,6 +532,9 @@ func (p *Parser) finishCall(callee Expr) (Expr, error) {
 
 	if !p.check(RIGHT_PAREN) {
 		for true {
+			if len(arguments) >= 255 {
+				p.error(p.peek(), "Can't have more than 255 arguments.")
+			}
 			expr, err := p.expression()
 			if err != nil {
 				return nil, fmt.Errorf("expression(): %w", err)
