@@ -1,0 +1,12 @@
+// buggy code from chapter 11.1, introduced by adding closures
+// should print "global" then "block" before corresponding fix is implemented
+var a = "global";
+{
+  fun showA() {
+    print a;
+  }
+
+  showA();
+  var a = "block";
+  showA();
+}
