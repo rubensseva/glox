@@ -89,3 +89,6 @@ test "func_fib.lox" "0
 1597
 2584
 4181"
+
+test "closure.lox" "1
+2"

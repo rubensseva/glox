@@ -153,7 +153,7 @@ func (i *Interpreter) visitExpressionStmt(stmt ExpressionStmt) {
 }
 
 func (i *Interpreter) visitFunctionStmt(stmt FunctionStmt) {
-	function := NewLoxFunction(stmt)
+	function := NewLoxFunction(stmt, i.ENvironment)
 	i.ENvironment.define(stmt.name.lexeme, function)
 }
 
