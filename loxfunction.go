@@ -19,9 +19,6 @@ func NewLoxFunction(declaration FunctionStmt) *LoxFunction {
 
 // Using named return values here so we can modify the returned value in deferred function
 func (l *LoxFunction) Call(interpreter *Interpreter, arguments []any) (result any, err error) {
-	fmt.Printf("calling func %v with args %v\n", l.declaration.name, arguments)
-	fmt.Printf("env: %+v\n", interpreter.globals)
-
 	environment := NewEnvironment(interpreter.globals)
 	for i := 0; i < len(l.declaration.params); i++ {
 		environment.define(
@@ -36,7 +33,6 @@ func (l *LoxFunction) Call(interpreter *Interpreter, arguments []any) (result an
 			if !ok {
 				panic(val)
 			}
-			fmt.Printf("got returnhack: %[1]T %[1]+v %[1]f\n", v.value)
 			// HACK: Modify the return value
 			// See https://yourbasic.org/golang/defer/
 			result = v.value

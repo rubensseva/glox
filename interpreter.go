@@ -153,10 +153,8 @@ func (i *Interpreter) visitExpressionStmt(stmt ExpressionStmt) {
 }
 
 func (i *Interpreter) visitFunctionStmt(stmt FunctionStmt) {
-	fmt.Printf("visiting func stmt: %+v\n", stmt)
 	function := NewLoxFunction(stmt)
 	i.ENvironment.define(stmt.name.lexeme, function)
-	fmt.Println(i.ENvironment)
 }
 
 // https://craftinginterpreters.com/control-flow.html#conditional-execution
