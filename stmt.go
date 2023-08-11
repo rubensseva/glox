@@ -68,7 +68,7 @@ func (s FunctionStmt) IsStmt() {
 
 type ReturnStmt struct {
 	keyword Token
-	value Expr
+	value   Expr
 }
 
 func (r ReturnStmt) IsStmt() {

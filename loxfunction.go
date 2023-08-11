@@ -31,18 +31,18 @@ func (l *LoxFunction) Call(interpreter *Interpreter, arguments []any) (result an
 	}
 
 	defer func() {
-			if val := recover(); val != nil {
-				v, ok := val.(ReturnHack)
-				if !ok {
-					panic(val)
-				}
-				fmt.Printf("got returnhack: %[1]T %[1]+v %[1]f\n", v.value)
-				// HACK: Modify the return value
-				// See https://yourbasic.org/golang/defer/
-				result = v.value
-				err = nil
+		if val := recover(); val != nil {
+			v, ok := val.(ReturnHack)
+			if !ok {
+				panic(val)
 			}
-		}()
+			fmt.Printf("got returnhack: %[1]T %[1]+v %[1]f\n", v.value)
+			// HACK: Modify the return value
+			// See https://yourbasic.org/golang/defer/
+			result = v.value
+			err = nil
+		}
+	}()
 	if err := interpreter.executeBlock(l.declaration.body, environment); err != nil {
 		return nil, fmt.Errorf("executing block: %w", err)
 	}

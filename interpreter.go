@@ -198,7 +198,7 @@ func (i Interpreter) visitReturnStmt(stmt ReturnStmt) error {
 	// We are using panic() as control flow here
 	// The book uses Java exceptions, so this is an attempt
 	// to emulate that as close as possible
-	panic(ReturnHack{value:value})
+	panic(ReturnHack{value: value})
 }
 
 func (i *Interpreter) visitVarStmt(stmt VarStmt) error {
@@ -323,7 +323,7 @@ func (i *Interpreter) visitBinaryExpr(expr Binary) (any, error) {
 		}
 		return nil, fmt.Errorf("checking plus (could be number or string): %w", RuntimeError{
 			token: expr.operator,
-			msg:   fmt.Sprintf("Operands must be two numbers or two strings, got %[1]v %[1]T, %[2]v %[2]T",
+			msg: fmt.Sprintf("Operands must be two numbers or two strings, got %[1]v %[1]T, %[2]v %[2]T",
 				left, right),
 		})
 	case SLASH:
