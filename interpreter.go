@@ -5,6 +5,10 @@ import (
 	"fmt"
 )
 
+type ReturnHack struct {
+	value any
+}
+
 type Interpreter struct {
 	globals *Environment
 	// Using ENvironment name on purpose to closely match the book
@@ -109,6 +113,11 @@ func (i *Interpreter) execute(stmt Stmt) error {
 	case FunctionStmt:
 		i.visitFunctionStmt(t)
 		return nil
+	case ReturnStmt:
+		if err := i.visitReturnStmt(t); err != nil {
+			return err
+		}
+		return nil
 	default:
 		panic(fmt.Sprintf("executing: unknown type %T: %v", stmt, t))
 	}
@@ -144,8 +153,10 @@ func (i *Interpreter) visitExpressionStmt(stmt ExpressionStmt) {
 }
 
 func (i *Interpreter) visitFunctionStmt(stmt FunctionStmt) {
+	fmt.Printf("visiting func stmt: %+v\n", stmt)
 	function := NewLoxFunction(stmt)
 	i.ENvironment.define(stmt.name.lexeme, function)
+	fmt.Println(i.ENvironment)
 }
 
 // https://craftinginterpreters.com/control-flow.html#conditional-execution
@@ -171,6 +182,23 @@ func (i Interpreter) visitPrintStmt(stmt PrintStmt) error {
 	}
 	fmt.Println(stringify(value))
 	return nil
+}
+
+func (i Interpreter) visitReturnStmt(stmt ReturnStmt) error {
+	var value any = nil
+	if stmt.value != nil {
+		tmp, err := i.evaluate(stmt.value)
+		if err != nil {
+			return err
+		}
+		value = tmp
+	}
+
+	// HACK: Absolutely massive hack inoming!
+	// We are using panic() as control flow here
+	// The book uses Java exceptions, so this is an attempt
+	// to emulate that as close as possible
+	panic(ReturnHack{value:value})
 }
 
 func (i *Interpreter) visitVarStmt(stmt VarStmt) error {
@@ -295,7 +323,8 @@ func (i *Interpreter) visitBinaryExpr(expr Binary) (any, error) {
 		}
 		return nil, fmt.Errorf("checking plus (could be number or string): %w", RuntimeError{
 			token: expr.operator,
-			msg:   "Operands must be two numbers or two strings",
+			msg:   fmt.Sprintf("Operands must be two numbers or two strings, got %[1]v %[1]T, %[2]v %[2]T",
+				left, right),
 		})
 	case SLASH:
 		if err := checkNumberOperands(expr.operator, left, right); err != nil {

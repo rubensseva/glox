@@ -28,10 +28,14 @@ func (e *Environment) get(name Token) (any, error) {
 		return e.enclosing.get(name)
 	}
 
-	return nil, RuntimeError{
+	// return nil, RuntimeError{
+	// 	token: name,
+	// 	msg:   fmt.Sprintf("could not find token: %v in env: %v", name.lexeme, e.values),
+	// }
+	panic(RuntimeError{
 		token: name,
 		msg:   fmt.Sprintf("could not find token: %v in env: %v", name.lexeme, e.values),
-	}
+	})
 }
 
 func (e *Environment) assign(name Token, value any) error {

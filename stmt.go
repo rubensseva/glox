@@ -65,3 +65,12 @@ type FunctionStmt struct {
 func (s FunctionStmt) IsStmt() {
 	panic("shouldn't be called")
 }
+
+type ReturnStmt struct {
+	keyword Token
+	value Expr
+}
+
+func (r ReturnStmt) IsStmt() {
+	panic("shouldn't be called")
+}

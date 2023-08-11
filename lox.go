@@ -13,9 +13,7 @@ var (
 
 // Making this global because it is a static field on the Lox class in the book
 // https://craftinginterpreters.com/evaluating-expressions.html#running-the-interpreter
-var interpreter = Interpreter{
-	ENvironment: NewEnvironment(nil),
-}
+var interpreter = NewInterpreter()
 
 func lmain() {
 	switch {

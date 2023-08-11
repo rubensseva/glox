@@ -35,8 +35,11 @@ statement      → exprStmt
                | forStmt
                | ifStmt
                | printStmt
+               | returnStmt
                | whileStmt
                | block ;
+               
+returnStmt     → "return" expression? ";" ;
 
 forStmt        → "for" "(" ( varDecl | exprStmt | ";" )
                expression? ";"
@@ -84,7 +87,9 @@ Nonterminal                    Call to that rule’s function
 ```
 
 ### Current chapter
-9 - Control flow
+https://craftinginterpreters.com/functions.html#returning-from-calls
+Currently trying to figure out how to implement return statements.
+The book uses Java exceptions for this, so we gotta do something clever.
 
 ### Helpful links
 Precedence and associativity: https://craftinginterpreters.com/parsing-expressions.html#ambiguity-and-the-parsing-game
