@@ -69,6 +69,9 @@ func run(source string) {
 		return
 	}
 
+	// resolver := NewResolver(interpreter)
+	// resolver.resolveStatements(statements)
+
 	// Uncomment to print the ast for debu
 	// fmt.Println(ASTPrint(expression))
 

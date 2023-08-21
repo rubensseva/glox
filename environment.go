@@ -18,6 +18,22 @@ func (e *Environment) define(name string, value any) {
 	e.values[name] = value
 }
 
+func (e *Environment) ancestor(distance int) *Environment {
+	environment := e
+	for i := 0; i < distance; i++ {
+		environment = environment.enclosing
+	}
+	return environment
+}
+
+func (e *Environment) getAt(distance int, name string) any {
+	return e.ancestor(distance).values[name]
+}
+
+func (e *Environment) assignAt(distance int, name Token, value any) {
+	e.ancestor(distance).values[name.lexeme] = value
+}
+
 func (e *Environment) get(name Token) (any, error) {
 	val, ok := e.values[name.lexeme]
 	if ok {
@@ -34,7 +50,7 @@ func (e *Environment) get(name Token) (any, error) {
 	// }
 	panic(RuntimeError{
 		token: name,
-		msg:   fmt.Sprintf("could not find token: %v in env: %v", name.lexeme, e.values),
+		msg:   fmt.Sprintf("could not find token: \"%v\" in env: %v", name.lexeme, e.values),
 	})
 }
 

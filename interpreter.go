@@ -11,6 +11,8 @@ type ReturnHack struct {
 
 type Interpreter struct {
 	globals *Environment
+	locals map[Expr]int
+
 	// Using ENvironment name on purpose to closely match the book
 	ENvironment *Environment
 }
@@ -18,6 +20,7 @@ type Interpreter struct {
 func NewInterpreter() *Interpreter {
 	interpreter := &Interpreter{
 		globals: NewEnvironment(nil),
+		locals: make(map[Expr]int),
 	}
 	interpreter.ENvironment = interpreter.globals
 
@@ -121,6 +124,10 @@ func (i *Interpreter) execute(stmt Stmt) error {
 	default:
 		panic(fmt.Sprintf("executing: unknown type %T: %v", stmt, t))
 	}
+}
+
+func (i *Interpreter) resolve(expr Expr, depth int) {
+	i.locals[expr] = depth
 }
 
 func (i *Interpreter) executeBlock(statements []Stmt, environment *Environment) error {
@@ -231,7 +238,14 @@ func (i *Interpreter) visitAssignExpr(expr Assign) (any, error) {
 	if err != nil {
 		return nil, fmt.Errorf("evaluating assignment expression: %w", err)
 	}
-	i.ENvironment.assign(expr.name, value)
+
+	distance, ok := i.locals[expr]
+	if ok {
+		i.ENvironment.assignAt(distance, expr.name, value)
+	} else {
+		i.globals.assign(expr.name, value)
+	}
+
 	return value, nil
 }
 
@@ -442,5 +456,17 @@ func (i *Interpreter) visitUnaryExpr(expr Unary) (any, error) {
 }
 
 func (i *Interpreter) visitVariableExpr(expr Variable) (any, error) {
-	return i.ENvironment.get(expr.name)
+	return i.lookUpVariable(expr.name, expr)
+	// return i.ENvironment.get(expr.name)
+}
+
+func (i *Interpreter) lookUpVariable(name Token, expr Expr) (any, error) {
+	// Not sure if the translation to Golang works perfectly here
+	// See chapter 11.4.1
+	distance, ok := i.locals[expr]
+	if ok {
+		return i.ENvironment.getAt(distance, name.lexeme), nil
+	} else {
+		return i.globals.get(name)
+	}
 }

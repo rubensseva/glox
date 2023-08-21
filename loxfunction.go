@@ -6,7 +6,7 @@ import (
 
 type LoxFunction struct {
 	declaration FunctionStmt
-	closure *Environment
+	closure     *Environment
 }
 
 // Type check, just to be safe
